@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      UserRole @default(VOLUNTEER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  VOLUNTEER
+}
+
+model Borrower {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  loans     Loan[]
+}
+
+model Loan {
+  id           String     @id @default(cuid())
+  borrowerId   String
+  borrower     Borrower   @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  amount       Float
+  interestRate Float?     @default(0)
+  issuedAt     DateTime
+  dueDate      DateTime
+  status       LoanStatus @default(ACTIVE)
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  payments     Payment[]
+}
+
+enum LoanStatus {
+  ACTIVE
+  PAID
+  OVERDUE
+  DEFAULTED
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  loanId    String
+  loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  amount    Float
+  paidAt    DateTime @default(now())
+  notes     String?
+  method    String?  @default("cash")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  payload   String?  // JSON string
+  createdAt DateTime @default(now())
+}
+
+model LoanApplication {
+  id               String                @id @default(cuid())
+  fullName         String
+  email            String
+  phone            String
+  address          String
+  employmentStatus String
+  monthlyIncome    Float
+  loanAmount       Float
+  loanPurpose      String
+  documents        String?               // JSON array of document names
+  status           LoanApplicationStatus @default(PENDING)
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  reviewNotes      String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+}
+
+enum LoanApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
