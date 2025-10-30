@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { PlusCircle, Search, Edit, Trash2, Eye, ArrowLeft, DollarSign, Calendar, AlertTriangle, CheckCircle, User } from 'lucide-react'
+import { PlusCircle, Edit, Trash2, Eye, ArrowLeft, AlertTriangle, User } from 'lucide-react'
 import { useLoans, useCreateLoan, useUpdateLoan, useDeleteLoan, useBorrowers } from '@/hooks/use-api'
 import { formatCurrency, formatPercentage } from '@/lib/loan-utils'
 import { useForm } from 'react-hook-form'
@@ -31,11 +31,36 @@ const LoanSchema = z.object({
 type LoanFormInput = z.input<typeof LoanSchema>
 type LoanFormData = z.output<typeof LoanSchema>
 
+interface Loan {
+  id: string
+  borrowerId: string
+  amount: number
+  interestRate: number
+  issuedAt: string
+  dueDate: string
+  status: string
+  notes?: string
+  balance: number
+  totalPaid: number
+  totalOwed: number
+  isOverdue: boolean
+  borrower: {
+    id: string
+    name: string
+  }
+}
+
+interface Borrower {
+  id: string
+  name: string
+  email?: string
+}
+
 export default function LoansPage() {
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingLoan, setEditingLoan] = useState<any>(null)
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null)
   const [page, setPage] = useState(1)
 
   const { data: loansData, isLoading } = useLoans({
@@ -47,10 +72,10 @@ export default function LoansPage() {
   const { data: borrowersData } = useBorrowers({ limit: 100 })
 
   const createLoan = useCreateLoan()
-  const updateLoan = useUpdateLoan(editingLoan?.id)
+  const updateLoan = useUpdateLoan(editingLoan?.id ?? '')
   const deleteLoan = useDeleteLoan()
 
-  const form = useForm<LoanFormInput, any, LoanFormData>({
+  const form = useForm<LoanFormInput, unknown, LoanFormData>({
     resolver: zodResolver(LoanSchema),
     defaultValues: {
       borrowerId: '',
@@ -77,7 +102,7 @@ export default function LoansPage() {
     }
   }
 
-  const handleEdit = (loan: any) => {
+  const handleEdit = (loan: Loan) => {
     setEditingLoan(loan)
     form.reset({
       borrowerId: loan.borrowerId,
@@ -99,7 +124,7 @@ export default function LoansPage() {
     }
   }
 
-  const getStatusBadge = (loan: any) => {
+  const getStatusBadge = (loan: Loan) => {
     if (loan.status === 'PAID') {
       return <Badge variant="success">Paid</Badge>
     }
@@ -137,13 +162,13 @@ export default function LoansPage() {
             <div className="flex items-center gap-3">
               <ThemeToggle />
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Create Loan
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Create Loan
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>Create New Loan</DialogTitle>
                   <DialogDescription>
@@ -161,7 +186,7 @@ export default function LoansPage() {
                         <SelectValue placeholder="Select a borrower" />
                       </SelectTrigger>
                       <SelectContent>
-                        {borrowers.map((borrower: any) => (
+                        {borrowers.map((borrower: Borrower) => (
                           <SelectItem key={borrower.id} value={borrower.id}>
                             {borrower.name}
                           </SelectItem>
@@ -246,8 +271,9 @@ export default function LoansPage() {
                     </Button>
                   </DialogFooter>
                 </form>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>
@@ -320,7 +346,7 @@ export default function LoansPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loans.map((loan: any) => (
+                  {loans.map((loan: Loan) => (
                     <TableRow key={loan.id}>
                       <TableCell>
                         <div>
@@ -463,7 +489,7 @@ export default function LoansPage() {
                   <SelectValue placeholder="Select a borrower" />
                 </SelectTrigger>
                 <SelectContent>
-                  {borrowers.map((borrower: any) => (
+                  {borrowers.map((borrower: Borrower) => (
                     <SelectItem key={borrower.id} value={borrower.id}>
                       {borrower.name}
                     </SelectItem>

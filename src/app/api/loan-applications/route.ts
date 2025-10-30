@@ -70,14 +70,14 @@ export async function POST(request: NextRequest) {
         loanAmount: validatedData.loanAmount,
         loanPurpose: validatedData.loanPurpose,
         documents: validatedData.documents ? JSON.stringify(validatedData.documents) : null,
-        status: 'PENDING',
+        status: 'SUBMITTED',
       },
     })
 
     // Log the application creation
     await prisma.auditLog.create({
       data: {
-        action: 'LOAN_APPLICATION_CREATED',
+        action: 'LOAN_APPLICATION_SUBMITTED',
         payload: JSON.stringify({
           applicationId: application.id,
           fullName: application.fullName,

@@ -79,26 +79,42 @@ model AuditLog {
 }
 
 model LoanApplication {
-  id               String                @id @default(cuid())
-  fullName         String
-  email            String
-  phone            String
-  address          String
-  employmentStatus String
-  monthlyIncome    Float
-  loanAmount       Float
-  loanPurpose      String
-  documents        String?               // JSON array of document names
-  status           LoanApplicationStatus @default(PENDING)
-  reviewedBy       String?
-  reviewedAt       DateTime?
-  reviewNotes      String?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  id                    String                @id @default(cuid())
+  fullName              String
+  email                 String
+  phone                 String
+  address               String
+  employmentStatus      String
+  monthlyIncome         Float
+  loanAmount            Float
+  loanPurpose           String
+  documents             String?               // JSON array of document names
+  status                LoanApplicationStatus @default(SUBMITTED)
+  reviewedBy            String?
+  reviewedAt            DateTime?
+  reviewNotes           String?
+  conditionalApprovalNotes String?
+  requiredDocuments     String?               // JSON array of required documents for conditional approval
+  signedDocuments       String?               // JSON array of signed document names
+  documentsSignedAt     DateTime?
+  finalApprovedBy       String?
+  finalApprovedAt       DateTime?
+  disbursedBy           String?
+  disbursedAt           DateTime?
+  disbursementAmount    Float?
+  disbursementMethod    String?
+  disbursementReference String?
+  loanId                String?               // Reference to created loan after final approval
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 enum LoanApplicationStatus {
-  PENDING
+  SUBMITTED
+  UNDER_REVIEW
+  CONDITIONALLY_APPROVED
+  DOCUMENTS_SIGNED
   APPROVED
+  DISBURSED
   REJECTED
 }

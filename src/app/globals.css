@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Toronto Impact Initiative Brand Colors */
+  /* Light Mode - Toronto Impact Initiative Brand Colors */
   --color-primary: oklch(70% 0.25 270);
   --color-primary-foreground: oklch(100% 0 0);
 
@@ -41,6 +41,37 @@
   --animate-bounce: bounce 1s infinite;
 }
 
+/* Dark Mode Theme */
+.dark {
+  --color-primary: oklch(75% 0.25 270);
+  --color-primary-foreground: oklch(10% 0 0);
+
+  --color-accent: oklch(75% 0.20 200);
+  --color-accent-foreground: oklch(10% 0 0);
+
+  --color-success: oklch(70% 0.22 145);
+  --color-success-foreground: oklch(10% 0 0);
+
+  --color-warning: oklch(80% 0.18 70);
+  --color-warning-foreground: oklch(10% 0 0);
+
+  --color-destructive: oklch(65% 0.23 25);
+  --color-destructive-foreground: oklch(100% 0 0);
+
+  --color-background: oklch(15% 0.01 270);
+  --color-foreground: oklch(95% 0.01 270);
+
+  --color-card: oklch(18% 0.01 270);
+  --color-card-foreground: oklch(95% 0.01 270);
+
+  --color-muted: oklch(25% 0.01 270);
+  --color-muted-foreground: oklch(65% 0.01 270);
+
+  --color-border: oklch(30% 0.01 270);
+  --color-input: oklch(30% 0.01 270);
+  --color-ring: oklch(75% 0.25 270);
+}
+
 @theme {
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
@@ -54,14 +85,15 @@
   border-color: var(--color-border);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-feature-settings: "rlig" 1, "calt" 1;
-}
-
-html {
-  scroll-behavior: smooth;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Custom scrollbar */
