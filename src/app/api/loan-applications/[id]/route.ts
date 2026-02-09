@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { sendApplicationApprovedEmail, sendApplicationRejectedEmail } from '@/lib/email'
 
 const UnderReviewSchema = z.object({
   action: z.literal('start_review'),
@@ -150,6 +151,14 @@ export async function PATCH(
             }),
           },
         })
+
+        // Send conditional approval email
+        sendApplicationApprovedEmail(
+          application.email,
+          application.fullName,
+          application.loanAmount,
+          validatedData.conditionalApprovalNotes
+        ).catch((err) => console.error('Failed to send conditional approval email:', err))
         break
 
       case 'reject':
@@ -178,6 +187,13 @@ export async function PATCH(
             }),
           },
         })
+
+        // Send rejection email
+        sendApplicationRejectedEmail(
+          application.email,
+          application.fullName,
+          validatedData.reviewNotes
+        ).catch((err) => console.error('Failed to send rejection email:', err))
         break
 
       case 'sign_documents':
@@ -268,6 +284,13 @@ export async function PATCH(
             }),
           },
         })
+
+        // Send final approval email
+        sendApplicationApprovedEmail(
+          application.email,
+          application.fullName,
+          application.loanAmount
+        ).catch((err) => console.error('Failed to send approval email:', err))
         break
 
       case 'disburse':

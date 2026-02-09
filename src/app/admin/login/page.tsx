@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { Sparkles, ArrowRight, Mail, Lock, TrendingUp } from 'lucide-react'
+import { Sparkles, ArrowRight, Mail, Lock, TrendingUp, Loader2, AlertCircle } from 'lucide-react'
 import { gsap } from 'gsap'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -47,48 +50,65 @@ export default function LoginPage() {
         duration: 0.8,
         ease: 'back.out(1.7)'
       })
-      .from(cardRef.current, {
-        y: 100,
-        opacity: 0,
-        scale: 0.9,
-        duration: 0.6,
-      }, '-=0.3')
-      .from('.form-element', {
-        x: -30,
-        opacity: 0,
-        duration: 0.4,
-        stagger: 0.1
-      }, '-=0.2')
-      .from('.feature-pill', {
-        scale: 0,
-        opacity: 0,
-        duration: 0.3,
-        stagger: 0.1,
-        ease: 'back.out(2)'
-      }, '-=0.3')
+        .from(cardRef.current, {
+          y: 100,
+          opacity: 0,
+          scale: 0.9,
+          duration: 0.6,
+        }, '-=0.3')
+        .from('.form-element', {
+          x: -30,
+          opacity: 0,
+          duration: 0.4,
+          stagger: 0.1
+        }, '-=0.2')
+        .from('.feature-pill', {
+          scale: 0,
+          opacity: 0,
+          duration: 0.3,
+          stagger: 0.1,
+          ease: 'back.out(2)'
+        }, '-=0.3')
 
     }, containerRef)
 
     return () => ctx.revert()
   }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
+    setIsLoading(true)
 
-    // Smooth exit animation before navigation
-    const tl = gsap.timeline({
-      onComplete: () => router.push('/admin/dashboard')
-    })
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
 
-    tl.to(cardRef.current, {
-      scale: 0.95,
-      opacity: 0,
-      duration: 0.3,
-      ease: 'power2.in'
-    })
+      if (result?.error) {
+        setError('Invalid email or password')
+        setIsLoading(false)
+        return
+      }
 
-    if (email && password) {
+      // Smooth exit animation before navigation
+      const tl = gsap.timeline({
+        onComplete: () => router.push('/admin/dashboard')
+      })
+
+      tl.to(cardRef.current, {
+        scale: 0.95,
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in'
+      })
+
       tl.play()
+    } catch (err) {
+      setError('An error occurred. Please try again.')
+      setIsLoading(false)
     }
   }
 
@@ -175,6 +195,13 @@ export default function LoginPage() {
 
             <form ref={formRef} onSubmit={handleLogin}>
               <CardContent className="space-y-5">
+                {error && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                  </div>
+                )}
+
                 <div className="form-element space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />
@@ -188,6 +215,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="h-11 border-border/50 focus:border-primary transition-all duration-300"
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -204,6 +232,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="h-11 border-border/50 focus:border-primary transition-all duration-300"
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -222,9 +251,19 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full h-11 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all duration-300 text-white font-medium group"
+                  disabled={isLoading}
                 >
-                  Sign In
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      Sign In
+                      <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
                 </Button>
 
                 <div className="form-element relative">

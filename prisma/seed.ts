@@ -1,17 +1,22 @@
 import { PrismaClient, UserRole, LoanStatus } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Seeding database...')
 
+  // Hash password for admin user (password: admin123)
+  const hashedPassword = await bcrypt.hash('admin123', 12)
+
   // Create users
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@torontoimpact.org' },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       email: 'admin@torontoimpact.org',
       name: 'Admin User',
+      password: hashedPassword,
       role: UserRole.ADMIN,
     },
   })

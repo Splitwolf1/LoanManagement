@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { CommandPaletteProvider } from "@/providers/command-palette-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { AuthProvider } from "@/providers/auth-provider";
 import PWAWrapper from "@/components/PWAWrapper";
 
 const geistSans = Geist({
@@ -48,7 +49,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Toronto Impact Initiative - Loan Management", 
+    title: "Toronto Impact Initiative - Loan Management",
     description: "Community loan management system for Toronto Impact Initiative",
     images: ["/icons/icon-512x512.png"]
   },
@@ -80,15 +81,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <QueryProvider>
-            <CommandPaletteProvider>
-              <PWAWrapper>
-                {children}
-              </PWAWrapper>
-            </CommandPaletteProvider>
-          </QueryProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <QueryProvider>
+              <CommandPaletteProvider>
+                <PWAWrapper>
+                  {children}
+                </PWAWrapper>
+              </CommandPaletteProvider>
+            </QueryProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

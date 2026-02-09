@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { sendApplicationReceivedEmail } from '@/lib/email'
 
 const LoanApplicationSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -85,6 +86,13 @@ export async function POST(request: NextRequest) {
         }),
       },
     })
+
+    // Send confirmation email (async, don't block response)
+    sendApplicationReceivedEmail(
+      application.email,
+      application.fullName,
+      application.loanAmount
+    ).catch((err) => console.error('Failed to send confirmation email:', err))
 
     return NextResponse.json(application, { status: 201 })
   } catch (error) {
