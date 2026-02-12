@@ -17,7 +17,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function DashboardPage() {
   const { data: summary, isLoading, error } = useSummaryData()
-  
+
   const dashboardRef = useRef<HTMLDivElement>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const statsCardsRef = useRef<HTMLDivElement>(null)
@@ -28,40 +28,40 @@ export default function DashboardPage() {
     if (!isLoading && summary && dashboardRef.current) {
       // Initial page load animation
       const tl = gsap.timeline()
-      
+
       // Hero section fade in
-      tl.fromTo(heroRef.current, 
+      tl.fromTo(heroRef.current,
         { opacity: 0, y: 30 },
         { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }
       )
-      
-      // Stats cards stagger animation
-      .fromTo(statsCardsRef.current?.children || [], 
-        { opacity: 0, y: 40, scale: 0.95 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          scale: 1, 
-          duration: 0.6, 
-          stagger: 0.1,
-          ease: "back.out(1.7)"
-        },
-        "-=0.4"
-      )
-      
-      // Charts and activity sections
-      .fromTo([chartsRef.current, activityRef.current], 
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.6, stagger: 0.2 },
-        "-=0.3"
-      )
+
+        // Stats cards stagger animation
+        .fromTo(statsCardsRef.current?.children || [],
+          { opacity: 0, y: 40, scale: 0.95 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "back.out(1.7)"
+          },
+          "-=0.4"
+        )
+
+        // Charts and activity sections
+        .fromTo([chartsRef.current, activityRef.current],
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.6, stagger: 0.2 },
+          "-=0.3"
+        )
     }
   }, [isLoading, summary])
 
   // Hover animations for cards
   const handleCardHover = (e: React.MouseEvent<HTMLDivElement>) => {
-    gsap.to(e.currentTarget, { 
-      y: -5, 
+    gsap.to(e.currentTarget, {
+      y: -5,
       boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
       duration: 0.3,
       ease: "power2.out"
@@ -69,8 +69,8 @@ export default function DashboardPage() {
   }
 
   const handleCardLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    gsap.to(e.currentTarget, { 
-      y: 0, 
+    gsap.to(e.currentTarget, {
+      y: 0,
       boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
       duration: 0.3,
       ease: "power2.out"
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             backgroundSize: '60px 60px'
           }}></div>
         </div>
-        
+
         <header className="relative bg-white/80 backdrop-blur-lg shadow-sm border-b border-blue-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
@@ -141,7 +141,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </header>
-        
+
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           backgroundSize: '60px 60px'
         }}></div>
       </div>
-      
+
       {/* Header */}
       <header className="relative bg-white/80 backdrop-blur-lg shadow-sm border-b border-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-600">Loan Management Dashboard</p>
               </div>
             </div>
-            
+
             <nav className="flex items-center space-x-2">
               <ThemeToggle />
               <Link href="/admin/borrowers">
@@ -232,7 +232,7 @@ export default function DashboardPage() {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Supporting local businesses and individuals through accessible microfinance solutions
           </p>
-          
+
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/admin/borrowers?action=new">
@@ -247,12 +247,29 @@ export default function DashboardPage() {
                 Create Loan
               </Button>
             </Link>
+            <Button
+              onClick={async () => {
+                const response = await fetch('/api/reports/monthly')
+                const data = await response.json()
+                const blob = new Blob([data.html], { type: 'text/html' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `monthly-report-${new Date().toISOString().slice(0, 7)}.html`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Download Monthly Report
+            </Button>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div ref={statsCardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card 
+          <Card
             className="relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
             onMouseEnter={handleCardHover}
             onMouseLeave={handleCardLeave}
@@ -275,7 +292,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
             onMouseEnter={handleCardHover}
             onMouseLeave={handleCardLeave}
@@ -296,7 +313,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
             onMouseEnter={handleCardHover}
             onMouseLeave={handleCardLeave}
@@ -317,7 +334,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
             onMouseEnter={handleCardHover}
             onMouseLeave={handleCardLeave}
@@ -341,8 +358,8 @@ export default function DashboardPage() {
 
         {/* Enhanced Charts and Data Visualization */}
         <div ref={chartsRef}>
-          <PortfolioCharts 
-            portfolioStats={stats} 
+          <PortfolioCharts
+            portfolioStats={stats}
             recentActivity={summary?.recentActivity}
           />
         </div>
@@ -358,7 +375,7 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-2xl font-bold mb-2">Community Impact</h3>
                   <p className="text-blue-100 max-w-2xl">
-                    Together, we&apos;ve supported {stats.totalLoans || 0} community members with {formatCurrency(stats.totalDisbursed || 0)} in accessible loans, 
+                    Together, we&apos;ve supported {stats.totalLoans || 0} community members with {formatCurrency(stats.totalDisbursed || 0)} in accessible loans,
                     fostering economic growth and opportunity across Toronto.
                   </p>
                 </div>

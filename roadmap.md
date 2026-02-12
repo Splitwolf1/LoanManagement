@@ -7,14 +7,20 @@
 - ✅ **Admin Portal** - Complete loan & borrower management with dashboard
 - ✅ **Borrower Portal** - Dedicated user experience for loan applicants
 - ✅ **Analytics & Reports** - Comprehensive visualizations and insights
-- ✅ **Database Integration** - Fully functional with Prisma + SQLite
+- ✅ **Database Integration** - Fully functional with Prisma + SQLite (local) / PostgreSQL (production)
 - ✅ **Responsive Design** - Works beautifully on all devices
+- ✅ **NextAuth.js Authentication** - Secure email/password login with JWT sessions
+- ✅ **Email Notifications** - Resend integration with professional templates
+- ✅ **AI Risk Scoring** - OpenAI-powered risk assessment (with mock fallback)
 
 ### 🚀 **Quick Start:**
 ```bash
 npm run dev  # Start development server
-Visit: http://localhost:3000/login (Admin Portal)
+Visit: http://localhost:3000/admin/login (Admin Portal)
 Visit: http://localhost:3000/borrower/login (Borrower Portal)
+
+# Test Admin Login:
+admin@torontoimpact.org / admin123
 ```
 
 ---
@@ -169,14 +175,15 @@ A streamlined loan management tool for community organizations to track loans, p
 
 ### Backend
 - **Next.js API Routes** (single fullstack app)
-- **SQLite** with **Prisma ORM**
-- **Simple Auth Flow** (basic login/signup → implement NextAuth.js later)
-- **OpenAI API** for risk scoring
-- **Nodemailer** for email notifications
+- **SQLite** (development) / **PostgreSQL** (production) with **Prisma ORM**
+- **NextAuth.js** for authentication (email/password with JWT sessions)
+- **OpenAI API** for risk scoring (with mock fallback)
+- **Resend** for email notifications
 
 ### Deployment
 - **Vercel** (single deployment for fullstack app)
-- **Vercel Postgres** or **SQLite** for database
+- **Vercel Postgres** (free tier: 256MB) for production database
+- **SQLite** for local development
 
 ---
 
@@ -417,39 +424,52 @@ model Payment {
 - Celebration animations for loan completions
 - Toast notifications for all actions
 
-### Phase 7: AI Risk Assessment
+### Phase 7: AI Risk Assessment ✅ COMPLETED
 **Timeline: Week 4**
+
+**✅ Implemented Features:**
+- OpenAI GPT-4o-mini integration for risk analysis
+- `/api/ai/risk-score` endpoint for loan application risk assessment
+- `/api/ai/portfolio` endpoint for portfolio insights
+- Mock fallback when API key not configured
+- Risk score (0-100) with factors and recommendations
 
 **Risk Scoring API:**
 ```typescript
 // Input
 {
-  borrower: { name, loanHistory, paymentHistory },
-  loan: { amount, dueDate, interestRate }
+  fullName: string,
+  monthlyIncome: number,
+  loanAmount: number,
+  loanPurpose: string,
+  employmentStatus: string
 }
 
 // Output
 {
-  riskScore: 0-100,
+  score: 0-100,
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH',
   factors: string[],
-  recommendations: string[]
+  recommendation: string,
+  summary: string
 }
 ```
 
-**Integration:**
-- Risk score display in loan details
-- Risk-based alerts in dashboard
-- Automated risk reports
-
-### Phase 8: Notifications & Reports
+### Phase 8: Notifications & Reports ✅ MOSTLY COMPLETED
 **Timeline: Week 5**
 
-**Features:**
-- Email reminders for overdue loans
-- Advanced reporting with AI insights
-- Monthly summary reports
-- Automated weekly overdue notifications
-- Integration with enhanced export features
+**✅ Completed Features:**
+- Resend email integration
+- Professional HTML email templates:
+  - Application received confirmation
+  - Approval notification (with conditions)
+  - Rejection notification (with reason)
+  - Payment reminder
+- Automatic email triggers in loan application workflow
+
+**⏳ Remaining:**
+- Cron job for automated weekly overdue notifications ✅ DONE
+- Monthly summary report generation ✅ DONE
 
 ### Phase 9: Testing & Deployment
 **Timeline: Week 6**
@@ -511,10 +531,14 @@ model Payment {
 - Dashboard welcome message: "Welcome to Toronto Impact Initiative"
 - Footer with organization contact and impact statistics
 
-**Phase 10: Enhanced Authentication (Future)**
-- Replace simple auth with NextAuth.js
-- Add role-based permissions (Admin/Volunteer)
-- OAuth integration (Google/Microsoft)
-- Password reset functionality
+**Phase 10: Enhanced Authentication ✅ COMPLETED**
+- ✅ NextAuth.js with credentials provider
+- ✅ JWT session strategy (30-day expiry)
+- ✅ Admin route protection via middleware
+- ✅ Signup API with password hashing (bcryptjs)
+- ✅ TypeScript types for user sessions
+- ✅ Password reset functionality (forgot/reset flow with email)
+- ✅ Google OAuth integration (button + provider)
+- ⏳ Microsoft OAuth - future
 
 This approach delivers a professional, feature-rich loan management system for Toronto Impact Initiative that feels like a modern SaaS product while maintaining simplicity in deployment and maintenance.

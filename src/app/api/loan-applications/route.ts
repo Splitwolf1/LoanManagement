@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { LoanApplicationStatus } from '@prisma/client'
 import { z } from 'zod'
 import { sendApplicationReceivedEmail } from '@/lib/email'
 
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const skip = (page - 1) * limit
 
-    const where = status ? { status } : {}
+    const where = status ? { status: status as LoanApplicationStatus } : {}
 
     const [applications, total] = await Promise.all([
       prisma.loanApplication.findMany({
@@ -57,9 +58,15 @@ export async function GET(request: NextRequest) {
 // POST /api/loan-applications - Create new application
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const validatedData = LoanApplicationSchema.parse(body)
+    console.log('=== Loan Application POST Request Started ===')
 
+    const body = await request.json()
+    console.log('Request body received:', JSON.stringify(body, null, 2))
+
+    const validatedData = LoanApplicationSchema.parse(body)
+    console.log('Data validated successfully')
+
+    console.log('Creating loan application in database...')
     const application = await prisma.loanApplication.create({
       data: {
         fullName: validatedData.fullName,
@@ -74,8 +81,10 @@ export async function POST(request: NextRequest) {
         status: 'SUBMITTED',
       },
     })
+    console.log('Application created with ID:', application.id)
 
     // Log the application creation
+    console.log('Creating audit log...')
     await prisma.auditLog.create({
       data: {
         action: 'LOAN_APPLICATION_SUBMITTED',
@@ -86,26 +95,34 @@ export async function POST(request: NextRequest) {
         }),
       },
     })
+    console.log('Audit log created')
 
     // Send confirmation email (async, don't block response)
+    console.log('Sending confirmation email...')
     sendApplicationReceivedEmail(
       application.email,
       application.fullName,
       application.loanAmount
     ).catch((err) => console.error('Failed to send confirmation email:', err))
 
+    console.log('=== Loan Application POST Request Completed Successfully ===')
     return NextResponse.json(application, { status: 201 })
   } catch (error) {
+    console.error('=== Loan Application POST Request Failed ===')
+    console.error('Error type:', error?.constructor?.name)
+    console.error('Error message:', error instanceof Error ? error.message : String(error))
+    console.error('Full error:', error)
+
     if (error instanceof z.ZodError) {
+      console.error('Validation errors:', JSON.stringify(error.issues, null, 2))
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       )
     }
 
-    console.error('Error creating loan application:', error)
     return NextResponse.json(
-      { error: 'Failed to create loan application' },
+      { error: 'Failed to create loan application', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

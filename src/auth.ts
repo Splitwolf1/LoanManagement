@@ -1,12 +1,22 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { authConfig } from "./auth.config"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig,
+    // Note: Using JWT strategy (defined in auth.config.ts) which works without database adapter
+    // OAuth accounts are linked via email matching
     providers: [
+        // Google OAuth Provider
+        Google({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            allowDangerousEmailAccountLinking: true, // Allow linking OAuth with existing email accounts
+        }),
+        // Email/Password Provider
         Credentials({
             name: "credentials",
             credentials: {
@@ -23,6 +33,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                 const user = await prisma.user.findUnique({
                     where: { email },
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        password: true,
+                        role: true,
+                    },
                 })
 
                 if (!user || !user.password) {
@@ -45,3 +62,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
 })
+
