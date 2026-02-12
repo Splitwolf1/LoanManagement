@@ -9,10 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Label } from '@/components/ui/label'
-import { 
-  PlusCircle, Search, Edit, Trash2, Eye, ArrowLeft, Phone, Mail, MapPin, 
-  Users, Filter, SortAsc, Grid, List, UserCheck, UserX, Building2,
-  Sparkles, Star, Activity, TrendingUp
+import {
+  PlusCircle, Search, Edit, Trash2, Eye, ArrowLeft, Phone, Mail, MapPin,
+  Users, Filter, SortAsc, Grid, List, UserCheck, Star, Activity
 } from 'lucide-react'
 import { useBorrowers, useCreateBorrower, useUpdateBorrower, useDeleteBorrower } from '@/hooks/use-api'
 import { useForm } from 'react-hook-form'
@@ -31,11 +30,25 @@ const BorrowerSchema = z.object({
 
 type BorrowerFormData = z.infer<typeof BorrowerSchema>
 
+interface Borrower {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  address?: string
+  notes?: string
+  loans?: Array<{
+    id: string
+    status: string
+    createdAt: string
+  }>
+}
+
 export default function BorrowersPage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingBorrower, setEditingBorrower] = useState<any>(null)
+  const [editingBorrower, setEditingBorrower] = useState<Borrower | null>(null)
   const [page, setPage] = useState(1)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
 
@@ -68,21 +81,21 @@ export default function BorrowersPage() {
   useEffect(() => {
     if (!isLoading && borrowersData && pageRef.current) {
       const tl = gsap.timeline()
-      
-      tl.fromTo(headerRef.current, 
+
+      tl.fromTo(headerRef.current,
         { opacity: 0, y: -30 },
         { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }
       )
-      .fromTo(filtersRef.current, 
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.5 },
-        "-=0.3"
-      )
-      .fromTo(tableRef.current, 
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.6 },
-        "-=0.2"
-      )
+        .fromTo(filtersRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5 },
+          "-=0.3"
+        )
+        .fromTo(tableRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.6 },
+          "-=0.2"
+        )
     }
   }, [isLoading, borrowersData])
 
@@ -101,7 +114,7 @@ export default function BorrowersPage() {
     }
   }
 
-  const handleEdit = (borrower: any) => {
+  const handleEdit = (borrower: Borrower) => {
     setEditingBorrower(borrower)
     form.reset({
       name: borrower.name,
@@ -123,8 +136,8 @@ export default function BorrowersPage() {
   }
 
   const handleCardHover = (e: React.MouseEvent<HTMLDivElement>) => {
-    gsap.to(e.currentTarget, { 
-      y: -8, 
+    gsap.to(e.currentTarget, {
+      y: -8,
       boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
       duration: 0.3,
       ease: "power2.out"
@@ -132,8 +145,8 @@ export default function BorrowersPage() {
   }
 
   const handleCardLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    gsap.to(e.currentTarget, { 
-      y: 0, 
+    gsap.to(e.currentTarget, {
+      y: 0,
       boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
       duration: 0.3,
       ease: "power2.out"
@@ -152,7 +165,7 @@ export default function BorrowersPage() {
             backgroundSize: '60px 60px'
           }}></div>
         </div>
-        
+
         <header className="relative bg-white/80 backdrop-blur-lg shadow-sm border-b border-blue-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
@@ -195,7 +208,7 @@ export default function BorrowersPage() {
           backgroundSize: '60px 60px'
         }}></div>
       </div>
-      
+
       {/* Header */}
       <header ref={headerRef} className="relative bg-white/80 backdrop-blur-lg shadow-sm border-b border-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -392,11 +405,11 @@ export default function BorrowersPage() {
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                  <span>{borrowers.filter((b: any) => b.loans?.some((l: any) => l.status === 'ACTIVE')).length} active</span>
+                  <span>{borrowers.filter((b: Borrower) => b.loans?.some((l) => l.status === 'ACTIVE')).length} active</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-gray-400 rounded-full mr-1"></div>
-                  <span>{borrowers.filter((b: any) => !b.loans?.length).length} no loans</span>
+                  <span>{borrowers.filter((b: Borrower) => !b.loans?.length).length} no loans</span>
                 </div>
               </div>
             </CardTitle>
@@ -430,7 +443,7 @@ export default function BorrowersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {borrowers.map((borrower: any) => (
+                    {borrowers.map((borrower: Borrower) => (
                       <TableRow key={borrower.id} className="hover:bg-blue-50/50 transition-colors duration-200">
                         <TableCell>
                           <div className="flex items-center space-x-3">
@@ -475,7 +488,7 @@ export default function BorrowersPage() {
                               <span className="font-medium">{borrower.loans?.length || 0} loans</span>
                               {borrower.loans?.length > 0 && (
                                 <div className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                  {borrower.loans.filter((l: any) => l.status === 'ACTIVE').length} active
+                                  {borrower.loans.filter((l) => l.status === 'ACTIVE').length} active
                                 </div>
                               )}
                             </div>
@@ -488,7 +501,7 @@ export default function BorrowersPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            {borrower.loans?.some((l: any) => l.status === 'ACTIVE') ? (
+                            {borrower.loans?.some((l) => l.status === 'ACTIVE') ? (
                               <div className="flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                                 <Activity className="h-3 w-3 mr-1" />
                                 Active
@@ -542,9 +555,9 @@ export default function BorrowersPage() {
             ) : (
               // Grid View
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {borrowers.map((borrower: any) => (
-                  <Card 
-                    key={borrower.id} 
+                {borrowers.map((borrower: Borrower) => (
+                  <Card
+                    key={borrower.id}
                     className="relative overflow-hidden border-0 bg-white/80 backdrop-blur-sm shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
                     onMouseEnter={handleCardHover}
                     onMouseLeave={handleCardLeave}
@@ -558,7 +571,7 @@ export default function BorrowersPage() {
                         <div className="flex-1">
                           <CardTitle className="text-lg text-gray-900">{borrower.name}</CardTitle>
                           <CardDescription className="text-sm">
-                            {borrower.loans?.length || 0} loans • {borrower.loans?.filter((l: any) => l.status === 'ACTIVE').length || 0} active
+                            {borrower.loans?.length || 0} loans • {borrower.loans?.filter((l) => l.status === 'ACTIVE').length || 0} active
                           </CardDescription>
                         </div>
                       </div>
@@ -584,10 +597,10 @@ export default function BorrowersPage() {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                         <div className="flex items-center space-x-2">
-                          {borrower.loans?.some((l: any) => l.status === 'ACTIVE') ? (
+                          {borrower.loans?.some((l) => l.status === 'ACTIVE') ? (
                             <div className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                               Active
                             </div>
@@ -601,7 +614,7 @@ export default function BorrowersPage() {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-1">
                           <Button
                             variant="ghost"
