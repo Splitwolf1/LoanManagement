@@ -39,10 +39,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         name: true,
                         password: true,
                         role: true,
+                        isBanned: true,
                     },
                 })
 
                 if (!user || !user.password) {
+                    return null
+                }
+
+                // Check if user is banned
+                if (user.isBanned) {
                     return null
                 }
 
