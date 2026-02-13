@@ -19,6 +19,10 @@ model User {
   password      String?   // Hashed password for credentials login
   emailVerified DateTime? // For future OAuth/email verification
   role          UserRole  @default(VOLUNTEER)
+  isBanned      Boolean   @default(false)
+  bannedAt      DateTime?
+  bannedBy      String?   // Admin user ID who banned this user
+  banReason     String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
