@@ -42,6 +42,18 @@ model Borrower {
   loans     Loan[]
 }
 
+// Profile for borrowers using the borrower dashboard
+model BorrowerProfile {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  fullName    String
+  phone       String?
+  address     String?
+  dateOfBirth DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model Loan {
   id           String     @id @default(cuid())
   borrowerId   String

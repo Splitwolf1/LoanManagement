@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   DollarSign, Calendar, Clock, CheckCircle2, AlertCircle, FileText,
-  CreditCard, User, LogOut, Eye, ArrowRight
+  CreditCard, User, LogOut, Eye, ArrowRight, Settings
 } from 'lucide-react'
 import { gsap } from 'gsap'
 import Link from 'next/link'
@@ -26,10 +26,17 @@ interface LoanApplication {
   conditionalApprovalNotes: string | null
 }
 
-// Mock borrower data
-const mockBorrowerData = {
-  name: 'John Doe',
-  email: 'john.doe@email.com',
+interface BorrowerProfile {
+  id: string
+  email: string
+  fullName: string
+  phone?: string
+  address?: string
+  dateOfBirth?: string
+}
+
+// Mock loan data (will be replaced with real data later)
+const mockLoanData = {
   activeLoans: 1,
   totalBorrowed: 5000,
   totalPaid: 2000,
@@ -40,11 +47,13 @@ const mockBorrowerData = {
 export default function BorrowerDashboard() {
   const router = useRouter()
   const [applications, setApplications] = useState<LoanApplication[]>([])
+  const [profile, setProfile] = useState<BorrowerProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchApplications()
+    fetchProfile()
   }, [])
 
   useEffect(() => {
@@ -83,6 +92,21 @@ export default function BorrowerDashboard() {
     }
   }
 
+  const fetchProfile = async () => {
+    try {
+      // In production, get email from session/auth
+      const email = 'borrower@example.com' // TODO: Get from auth session
+      const response = await fetch(`/api/borrower/profile?email=${encodeURIComponent(email)}`)
+
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data)
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    }
+  }
+
   const getStatusBadge = (status: ApplicationStatus) => {
     const badges = {
       SUBMITTED: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', label: 'Submitted' },
@@ -113,12 +137,18 @@ export default function BorrowerDashboard() {
                 <User className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Welcome back, {mockBorrowerData.name}!</h1>
-                <p className="text-sm text-muted-foreground">{mockBorrowerData.email}</p>
+                <h1 className="text-2xl font-bold">Welcome back, {profile?.fullName || 'Guest'}!</h1>
+                <p className="text-sm text-muted-foreground">{profile?.email || 'No email'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />
+              <Link href="/borrower/profile">
+                <Button variant="outline" className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  Profile
+                </Button>
+              </Link>
               <Link href="/borrower/apply">
                 <Button className="bg-gradient-to-r from-accent to-success text-white">Apply for Loan</Button>
               </Link>
@@ -144,7 +174,7 @@ export default function BorrowerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent">${mockBorrowerData.totalBorrowed.toLocaleString()}</div>
+              <div className="text-3xl font-bold text-accent">${mockLoanData.totalBorrowed.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -157,7 +187,7 @@ export default function BorrowerDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold" style={{ color: 'var(--color-success)' }}>
-                ${mockBorrowerData.totalPaid.toLocaleString()}
+                ${mockLoanData.totalPaid.toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -170,9 +200,9 @@ export default function BorrowerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${mockBorrowerData.nextPaymentAmount.toLocaleString()}</div>
+              <div className="text-2xl font-bold">${mockLoanData.nextPaymentAmount.toLocaleString()}</div>
               <p className="text-sm text-muted-foreground mt-1">
-                Due {format(mockBorrowerData.nextPaymentDate, 'MMM dd')}
+                Due {format(mockLoanData.nextPaymentDate, 'MMM dd')}
               </p>
             </CardContent>
           </Card>
@@ -185,7 +215,7 @@ export default function BorrowerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">{mockBorrowerData.activeLoans}</div>
+              <div className="text-3xl font-bold text-primary">{mockLoanData.activeLoans}</div>
             </CardContent>
           </Card>
         </div>
@@ -274,7 +304,7 @@ export default function BorrowerDashboard() {
         </Card>
 
         {/* Current Loan Details - only show if they have active loans */}
-        {mockBorrowerData.activeLoans > 0 && (
+        {mockLoanData.activeLoans > 0 && (
           <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -289,19 +319,19 @@ export default function BorrowerDashboard() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Repayment Progress</span>
                   <span className="text-sm text-muted-foreground">
-                    {((mockBorrowerData.totalPaid / mockBorrowerData.totalBorrowed) * 100).toFixed(1)}%
+                    {((mockLoanData.totalPaid / mockLoanData.totalBorrowed) * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-accent to-success transition-all duration-1000"
-                    style={{ width: `${(mockBorrowerData.totalPaid / mockBorrowerData.totalBorrowed) * 100}%` }}
+                    style={{ width: `${(mockLoanData.totalPaid / mockLoanData.totalBorrowed) * 100}%` }}
                   ></div>
                 </div>
                 <div className="flex items-center justify-between mt-2 text-sm">
-                  <span className="text-success">Paid: ${mockBorrowerData.totalPaid.toLocaleString()}</span>
+                  <span className="text-success">Paid: ${mockLoanData.totalPaid.toLocaleString()}</span>
                   <span className="text-muted-foreground">
-                    Remaining: ${(mockBorrowerData.totalBorrowed - mockBorrowerData.totalPaid).toLocaleString()}
+                    Remaining: ${(mockLoanData.totalBorrowed - mockLoanData.totalPaid).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -311,10 +341,10 @@ export default function BorrowerDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Next Payment Due</p>
-                    <p className="text-2xl font-bold mt-1">${mockBorrowerData.nextPaymentAmount.toLocaleString()}</p>
+                    <p className="text-2xl font-bold mt-1">${mockLoanData.nextPaymentAmount.toLocaleString()}</p>
                     <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      {format(mockBorrowerData.nextPaymentDate, 'MMMM dd, yyyy')}
+                      {format(mockLoanData.nextPaymentDate, 'MMMM dd, yyyy')}
                     </p>
                   </div>
                   <Button className="bg-gradient-to-r from-accent to-success text-white">
