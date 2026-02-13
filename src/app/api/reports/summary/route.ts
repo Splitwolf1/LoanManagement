@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
       dateFilter.issuedAt = { gte: new Date(startDate) }
     }
     if (endDate) {
-      dateFilter.issuedAt = { 
-        ...dateFilter.issuedAt, 
-        lte: new Date(endDate) 
+      dateFilter.issuedAt = {
+        ...dateFilter.issuedAt,
+        lte: new Date(endDate)
       }
     }
 
@@ -68,14 +68,50 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Calculate Portfolio Growth (Month-over-Month volume)
+    const now = new Date()
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
+
+    const currentMonthVolume = await prisma.loan.aggregate({
+      where: {
+        createdAt: {
+          gte: startOfCurrentMonth,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    const lastMonthVolume = await prisma.loan.aggregate({
+      where: {
+        createdAt: {
+          gte: startOfLastMonth,
+          lte: endOfLastMonth,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    })
+
+    const currentVol = currentMonthVolume._sum.amount || 0
+    const lastVol = lastMonthVolume._sum.amount || 0
+
+    // Update portfolio growth metric
+    portfolioStats.portfolioGrowth = lastVol > 0
+      ? ((currentVol - lastVol) / lastVol) * 100
+      : (currentVol > 0 ? 100 : 0)
+
     // Calculate monthly trends (last 12 months)
     const monthlyTrends = []
-    const now = new Date()
-    
+
     for (let i = 11; i >= 0; i--) {
       const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
-      
+
       const monthLoans = await prisma.loan.count({
         where: {
           issuedAt: {
@@ -117,7 +153,7 @@ export async function GET(request: NextRequest) {
         const daysOverdue = Math.abs(
           Math.floor((new Date().getTime() - loan.dueDate.getTime()) / (1000 * 60 * 60 * 24))
         )
-        
+
         if (daysOverdue <= 30) {
           riskAnalysis.lowRisk++
         } else if (daysOverdue <= 90) {

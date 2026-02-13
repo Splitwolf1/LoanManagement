@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button'
 import {
   DollarSign, Users, AlertTriangle, TrendingUp, Plus, CreditCard, FileText,
   Target, BarChart3, PieChart, Activity, ArrowRight, Sparkles, Award,
-  TrendingDown, Clock, CheckCircle2, Building2, Heart
+  TrendingDown, Clock, CheckCircle2, Building2, Heart, Info, LogOut
 } from 'lucide-react'
 import { useSummaryData } from '@/hooks/use-api'
 import { formatCurrency, formatPercentage } from '@/lib/loan-utils'
 import { gsap } from 'gsap'
 import PortfolioCharts from '@/components/charts/PortfolioCharts'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { signOut } from 'next-auth/react'
 
 export default function DashboardPage() {
   const { data: summary, isLoading, error } = useSummaryData()
@@ -209,9 +210,17 @@ export default function DashboardPage() {
               <Link href="/admin/loan-requests">
                 <Button variant="ghost" className="hover:bg-blue-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-all duration-200">
                   <FileText className="h-4 w-4 mr-2" />
-                  Loan Requests
+                  Requests
                 </Button>
               </Link>
+              <Button
+                variant="ghost"
+                onClick={() => signOut({ callbackUrl: '/admin/login' })}
+                className="hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 hover:text-red-700 transition-all duration-200"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </nav>
           </div>
         </div>
@@ -306,9 +315,17 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="relative">
               <div className="text-3xl font-bold text-gray-900 mb-1">{formatCurrency(stats.totalDisbursed || 0)}</div>
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span>Avg: {formatCurrency(stats.averageLoanSize || 0)}</span>
+              <div className="flex flex-col gap-1 text-sm text-gray-600">
+                <div className="flex items-center space-x-1">
+                  <Info className="h-3 w-3 text-blue-500" />
+                  <span>Avg: {formatCurrency(stats.averageLoanSize || 0)}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <TrendingUp className="h-3 w-3 text-green-500" />
+                  <span className={stats.portfolioGrowth >= 0 ? "text-green-600" : "text-red-600"}>
+                    Growth: {formatPercentage(stats.portfolioGrowth || 0)}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -327,9 +344,15 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="relative">
               <div className="text-3xl font-bold text-gray-900 mb-1">{formatCurrency(stats.totalRepaid || 0)}</div>
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                <Activity className="h-3 w-3 text-purple-500" />
-                <span>Outstanding: {formatCurrency(stats.totalOutstanding || 0)}</span>
+              <div className="flex flex-col gap-1 text-sm text-gray-600">
+                <div className="flex items-center space-x-1">
+                  <Activity className="h-3 w-3 text-purple-500" />
+                  <span>Outstanding: {formatCurrency(stats.totalOutstanding || 0)}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                  <span>Repayment Rate: {formatPercentage(stats.repaymentRate || 0)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -348,9 +371,15 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="relative">
               <div className="text-3xl font-bold text-red-600 mb-1">{stats.overdueLoans || 0}</div>
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                <TrendingDown className="h-3 w-3 text-red-500" />
-                <span>Risk: {formatPercentage(stats.portfolioAtRisk || 0)}</span>
+              <div className="flex flex-col gap-1 text-sm text-gray-600">
+                <div className="flex items-center space-x-1">
+                  <TrendingDown className="h-3 w-3 text-red-500" />
+                  <span>Risk: {formatPercentage(stats.portfolioAtRisk || 0)}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <AlertTriangle className="h-3 w-3 text-orange-500" />
+                  <span>Default Rate: {formatPercentage(stats.defaultRate || 0)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>

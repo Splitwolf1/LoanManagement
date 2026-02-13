@@ -24,10 +24,10 @@ export function calculateLoanDetails(loan: LoanWithPayments): LoanCalculation {
   const interestRate = loan.interestRate || 0
   const interestAmount = principal * (interestRate / 100)
   const totalOwed = principal + interestAmount
-  
+
   const totalPaid = loan.payments.reduce((sum, payment) => sum + payment.amount, 0)
   const balance = totalOwed - totalPaid
-  
+
   const isOverdue = new Date() > loan.dueDate && loan.status === LoanStatus.ACTIVE && balance > 0
   const isFullyPaid = balance <= 0 || loan.status === LoanStatus.PAID
   const paymentProgress = totalOwed > 0 ? (totalPaid / totalOwed) * 100 : 0
@@ -60,7 +60,7 @@ export function calculateMonthlyPayment(
   const monthlyRate = annualInterestRate / 100 / 12
   const numerator = principal * monthlyRate * Math.pow(1 + monthlyRate, termInMonths)
   const denominator = Math.pow(1 + monthlyRate, termInMonths) - 1
-  
+
   return numerator / denominator
 }
 
@@ -101,17 +101,17 @@ export function generatePaymentSchedule(
   const monthlyPayment = calculateMonthlyPayment(principal, annualInterestRate, termInMonths)
   const monthlyRate = annualInterestRate / 100 / 12
   const schedule = []
-  
+
   let remainingBalance = principal
-  
+
   for (let i = 1; i <= termInMonths; i++) {
     const interestAmount = remainingBalance * monthlyRate
     const principalAmount = monthlyPayment - interestAmount
     remainingBalance -= principalAmount
-    
+
     const dueDate = new Date(startDate)
     dueDate.setMonth(dueDate.getMonth() + i)
-    
+
     schedule.push({
       paymentNumber: i,
       dueDate,
@@ -121,7 +121,7 @@ export function generatePaymentSchedule(
       remainingBalance: Math.max(0, remainingBalance),
     })
   }
-  
+
   return schedule
 }
 
@@ -142,13 +142,16 @@ export function calculatePortfolioStats(loans: LoanWithPayments[]) {
     totalOverdue: 0,
     averageLoanSize: 0,
     portfolioAtRisk: 0,
+    defaultRate: 0,
+    repaymentRate: 0,
+    portfolioGrowth: 0,
   }
 
   let totalOverdueAmount = 0
 
   loans.forEach(loan => {
     const calculation = calculateLoanDetails(loan)
-    
+
     stats.totalPrincipal += calculation.principal
     stats.totalDisbursed += calculation.principal
     stats.totalRepaid += calculation.totalPaid
@@ -174,6 +177,13 @@ export function calculatePortfolioStats(loans: LoanWithPayments[]) {
   stats.totalOverdue = totalOverdueAmount
   stats.averageLoanSize = stats.totalLoans > 0 ? stats.totalPrincipal / stats.totalLoans : 0
   stats.portfolioAtRisk = stats.totalOutstanding > 0 ? (stats.totalOverdue / stats.totalOutstanding) * 100 : 0
+
+  // New metrics
+  stats.defaultRate = stats.totalLoans > 0 ? (stats.defaultedLoans / stats.totalLoans) * 100 : 0
+  stats.repaymentRate = stats.totalDisbursed > 0 ? (stats.totalRepaid / stats.totalDisbursed) * 100 : 0
+
+  // Initialize portfolioGrowth (calculated in API with historical data)
+  stats.portfolioGrowth = 0
 
   return stats
 }
