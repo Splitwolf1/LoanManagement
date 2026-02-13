@@ -54,9 +54,19 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        console.error('Error creating user:', error)
+        // Detailed error logging
+        console.error('=== Signup Error ===')
+        console.error('Error type:', error?.constructor?.name)
+        console.error('Error message:', error instanceof Error ? error.message : String(error))
+        console.error('Full error:', error)
+        console.error('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+        console.error('DATABASE_URL preview:', process.env.DATABASE_URL?.substring(0, 20) + '...')
+
         return NextResponse.json(
-            { error: 'Failed to create user' },
+            {
+                error: 'Failed to create user',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            },
             { status: 500 }
         )
     }
