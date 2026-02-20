@@ -13,11 +13,12 @@ const UpdateLoanSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const loan = await prisma.loan.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         borrower: true,
         payments: {
@@ -59,14 +60,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json()
     const validatedData = UpdateLoanSchema.parse(body)
 
     const loan = await prisma.loan.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
       include: {
         borrower: {
@@ -115,12 +117,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check if loan has payments
     const paymentCount = await prisma.payment.count({
-      where: { loanId: params.id },
+      where: { loanId: id },
     })
 
     if (paymentCount > 0) {
@@ -131,14 +134,14 @@ export async function DELETE(
     }
 
     await prisma.loan.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     // Create audit log
     await prisma.auditLog.create({
       data: {
         action: 'LOAN_DELETED',
-        payload: JSON.stringify({ loanId: params.id }),
+        payload: JSON.stringify({ loanId: id }),
       },
     })
 

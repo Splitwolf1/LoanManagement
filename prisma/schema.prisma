@@ -54,6 +54,8 @@ model BorrowerProfile {
   phone       String?
   address     String?
   dateOfBirth DateTime?
+  employmentStatus String?
+  monthlyIncome   Float?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }

@@ -52,11 +52,12 @@ const ActionSchema = z.discriminatedUnion('action', [
 // GET /api/loan-applications/[id] - Get single application
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const application = await prisma.loanApplication.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     if (!application) {
@@ -79,14 +80,15 @@ export async function GET(
 // PATCH /api/loan-applications/[id] - Update application status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json()
     const validatedData = ActionSchema.parse(body)
 
     const application = await prisma.loanApplication.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     if (!application) {
@@ -107,7 +109,7 @@ export async function PATCH(
           )
         }
         updatedApplication = await prisma.loanApplication.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: 'UNDER_REVIEW',
             reviewedBy: validatedData.reviewedBy,
@@ -119,7 +121,7 @@ export async function PATCH(
           data: {
             action: 'LOAN_APPLICATION_UNDER_REVIEW',
             actorId: validatedData.reviewedBy,
-            payload: JSON.stringify({ applicationId: params.id }),
+            payload: JSON.stringify({ applicationId: id }),
           },
         })
         break
@@ -132,7 +134,7 @@ export async function PATCH(
           )
         }
         updatedApplication = await prisma.loanApplication.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: 'CONDITIONALLY_APPROVED',
             reviewedBy: validatedData.reviewedBy,
@@ -146,7 +148,7 @@ export async function PATCH(
             action: 'LOAN_APPLICATION_CONDITIONALLY_APPROVED',
             actorId: validatedData.reviewedBy,
             payload: JSON.stringify({
-              applicationId: params.id,
+              applicationId: id,
               requiredDocuments: validatedData.requiredDocuments,
             }),
           },
@@ -169,7 +171,7 @@ export async function PATCH(
           )
         }
         updatedApplication = await prisma.loanApplication.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: 'REJECTED',
             reviewedBy: validatedData.reviewedBy,
@@ -182,7 +184,7 @@ export async function PATCH(
             action: 'LOAN_APPLICATION_REJECTED',
             actorId: validatedData.reviewedBy,
             payload: JSON.stringify({
-              applicationId: params.id,
+              applicationId: id,
               reason: validatedData.reviewNotes,
             }),
           },
@@ -204,7 +206,7 @@ export async function PATCH(
           )
         }
         updatedApplication = await prisma.loanApplication.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: 'DOCUMENTS_SIGNED',
             signedDocuments: JSON.stringify(validatedData.signedDocuments),
@@ -215,7 +217,7 @@ export async function PATCH(
           data: {
             action: 'LOAN_APPLICATION_DOCUMENTS_SIGNED',
             payload: JSON.stringify({
-              applicationId: params.id,
+              applicationId: id,
               documents: validatedData.signedDocuments,
             }),
           },
@@ -264,7 +266,7 @@ export async function PATCH(
         })
 
         updatedApplication = await prisma.loanApplication.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: 'APPROVED',
             finalApprovedBy: validatedData.finalApprovedBy,
@@ -278,7 +280,7 @@ export async function PATCH(
             action: 'LOAN_APPLICATION_FINAL_APPROVED',
             actorId: validatedData.finalApprovedBy,
             payload: JSON.stringify({
-              applicationId: params.id,
+              applicationId: id,
               loanId: loan.id,
               borrowerId: borrower.id,
             }),
@@ -302,7 +304,7 @@ export async function PATCH(
         }
 
         updatedApplication = await prisma.loanApplication.update({
-          where: { id: params.id },
+          where: { id: id },
           data: {
             status: 'DISBURSED',
             disbursedBy: validatedData.disbursedBy,
@@ -318,7 +320,7 @@ export async function PATCH(
             action: 'LOAN_APPLICATION_DISBURSED',
             actorId: validatedData.disbursedBy,
             payload: JSON.stringify({
-              applicationId: params.id,
+              applicationId: id,
               amount: validatedData.disbursementAmount,
               method: validatedData.disbursementMethod,
               reference: validatedData.disbursementReference,

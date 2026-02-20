@@ -12,11 +12,12 @@ const UpdateBorrowerSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const borrower = await prisma.borrower.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         loans: {
           include: {
@@ -54,14 +55,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json()
     const validatedData = UpdateBorrowerSchema.parse(body)
 
     const borrower = await prisma.borrower.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
       include: {
         loans: {
@@ -95,13 +97,14 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check if borrower has active loans
     const activeLoanCount = await prisma.loan.count({
       where: {
-        borrowerId: params.id,
+        borrowerId: id,
         status: { not: 'PAID' },
       },
     })
@@ -114,7 +117,7 @@ export async function DELETE(
     }
 
     await prisma.borrower.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ success: true })

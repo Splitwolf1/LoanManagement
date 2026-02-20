@@ -11,11 +11,12 @@ const UpdatePaymentSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const payment = await prisma.payment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         loan: {
           include: {
@@ -44,15 +45,16 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json()
     const validatedData = UpdatePaymentSchema.parse(body)
 
     // Get current payment to check loan status
     const currentPayment = await prisma.payment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         loan: {
           include: {
@@ -71,7 +73,7 @@ export async function PATCH(
 
     // If amount is being changed, recalculate loan status
     if (validatedData.amount && validatedData.amount !== currentPayment.amount) {
-      const otherPayments = currentPayment.loan.payments.filter(p => p.id !== params.id)
+      const otherPayments = currentPayment.loan.payments.filter(p => p.id !== id)
       const otherPaymentsTotal = otherPayments.reduce((sum, p) => sum + p.amount, 0)
       const newTotalPaid = otherPaymentsTotal + validatedData.amount
       
@@ -96,7 +98,7 @@ export async function PATCH(
     }
 
     const payment = await prisma.payment.update({
-      where: { id: params.id },
+      where: { id: id },
       data: validatedData,
       include: {
         loan: {
@@ -144,12 +146,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get payment details before deletion
     const payment = await prisma.payment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         loan: {
           include: {
@@ -168,11 +171,11 @@ export async function DELETE(
 
     // Delete the payment
     await prisma.payment.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     // Recalculate loan status
-    const remainingPayments = payment.loan.payments.filter(p => p.id !== params.id)
+    const remainingPayments = payment.loan.payments.filter(p => p.id !== id)
     const totalPaid = remainingPayments.reduce((sum, p) => sum + p.amount, 0)
     const interestAmount = payment.loan.amount * (payment.loan.interestRate || 0) / 100
     const totalOwed = payment.loan.amount + interestAmount
@@ -188,7 +191,7 @@ export async function DELETE(
       data: {
         action: 'PAYMENT_DELETED',
         payload: JSON.stringify({
-          paymentId: params.id,
+          paymentId: id,
           loanId: payment.loanId,
           amount: payment.amount,
         }),
